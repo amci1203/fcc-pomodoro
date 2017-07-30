@@ -42,15 +42,13 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 	(function Pomodoro(pomo) {
-	    var _arguments = arguments;
-
 
 	    if (!pomo) return false;
 
@@ -70,12 +68,37 @@
 	        text = function text(elm, str) {
 	        return elm.innerText = str;
 	    },
+	        isInbound = function isInbound(n, i) {
+	        return !(n == minLen && i == -1) && !(n == maxLen && i == 1);
+	    },
+	        toggleClass = function toggleClass(elm) {
+	        for (var _len = arguments.length, classes = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	            classes[_key - 1] = arguments[_key];
+	        }
+
+	        return classes.forEach(function (cls) {
+	            return elm.classList.toggle(cls);
+	        });
+	    },
 	        hasClass = function hasClass(elm, str) {
 	        return elm.classList.contains(str);
 	    },
-	        toggleClass = function toggleClass(elm, str) {
-	        return [].concat(Array.prototype.slice.call(_arguments)).splice(1).forEach(function (cls) {
-	            return elm.classList.toggle(cls);
+	        addClass = function addClass(elm) {
+	        for (var _len2 = arguments.length, classes = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+	            classes[_key2 - 1] = arguments[_key2];
+	        }
+
+	        return classes.forEach(function (cls) {
+	            return elm.classList.add(cls);
+	        });
+	    },
+	        removeClass = function removeClass(elm) {
+	        for (var _len3 = arguments.length, classes = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+	            classes[_key3 - 1] = arguments[_key3];
+	        }
+
+	        return classes.forEach(function (cls) {
+	            return elm.classList.remove(cls);
 	        });
 	    },
 	        click = function click(elm, fn) {
@@ -91,16 +114,24 @@
 	        timerC = get('timer-container'),
 	        timerM = get('timer-minutes'),
 	        timerS = get('timer-seconds'),
+	        stopBtn = get('stop'),
 	        sessionSpan = get('session-length'),
 	        breakSpan = get('break-length'),
 	        increments = byClass(pomo, 'increment'),
 	        alarm = get('alarm'),
 	        second = 1000,
 	        minute = second * 60,
+	        minLen = 1,
+	        maxLen = 99,
 	        breakClass = 'on-break',
+	        setTimer = function setTimer() {
+	        left++;
+	        tick();
+	    },
 	        startTimer = function startTimer() {
 	        start = setInterval(tick, second);
 	        disableIncrementControls();
+	        removeClass(stopBtn, 'hidden');
 	    },
 	        pauseTimer = function pauseTimer() {
 	        return clearInterval(start);
@@ -112,26 +143,35 @@
 	        if (start) clearInterval(start);
 	        resetTimer();
 	        activateIncrementControls();
+	        addClass(stopBtn, 'hidden');
+	        removeClass(timerC, breakClass);
+	        removeClass(toggle, 'pause');
+	        addClass(toggle, 'play');
+	        resetTimer();
+	        setTimer();
 	    },
 	        toggleTimer = function toggleTimer() {
 	        hasClass(toggle, 'play') ? startTimer() : pauseTimer();
 	        toggleClass(toggle, 'play', 'pause');
 	    },
-	        disableIncrementControls = function disableIncrementControls() {
+
+
+	    // toggles STOP button visibility as well
+	    disableIncrementControls = function disableIncrementControls() {
 	        return increments.forEach(function (elm) {
-	            return elm.setAttribute('disbabled', 'disabled');
+	            return addClass(elm, 'disabled');
 	        });
 	    },
-	        activatedisableIncrementControls = function activatedisableIncrementControls() {
+	        activateIncrementControls = function activateIncrementControls() {
 	        return increments.forEach(function (elm) {
-	            return elm.removeAttribute('disabled');
+	            return removeClass(elm, 'disabled');
 	        });
 	    },
 	        ring = function ring() {
 	        return alarm.play();
 	    };
 	    var start = void 0,
-	        sessionLen = 0.1,
+	        sessionLen = 25,
 	        breakLen = 5,
 	        left = inSeconds(sessionLen);
 
@@ -140,34 +180,45 @@
 	        text(timerM, String(Math.floor(left / 60)).padLeft(2, 0));
 	        text(timerS, String(left % 60).padLeft(2, 0));
 
-	        !left && toggleClass(timerC, breakClass) && ring() && resetTimer();
+	        if (!left) {
+	            toggleClass(timerC, breakClass);
+	            ring();
+	            resetTimer();
+	        }
 	    }
 
 	    function incrementTimerLength() {
 	        var controls = this.parentElement.id.split(':')[1],
-	            increment = hasClass(this, 'increment-up') ? 1 : -1;
+	            increment = hasClass(this, 'increment-up') ? 1 : -1,
+	            onBreak = hasClass(timerC, breakClass);
 
-	        if (controls === 'session') {
+	        if (controls === 'session' && isInbound(sessionLen, increment)) {
 	            sessionLen += increment;
 	            text(sessionSpan, sessionLen);
+	            if (!onBreak) {
+	                left = inSeconds(sessionLen);
+	                setTimer();
+	            }
 	        }
-	        if (controls === 'break') {
+	        if (controls === 'break' && isInbound(breakLen, increment)) {
 	            breakLen += increment;
 	            text(breakSpan, breakLen);
+	            if (onBreak) {
+	                left = inSeconds(breakLen);
+	                setTimer();
+	            }
 	        }
-
-	        left = inSeconds(sessionLen);
 	    }
 
 	    return function () {
 	        click(toggle, toggleTimer);
 	        clickEach(increments, incrementTimerLength);
+	        click(stopBtn, stopTimer);
 
 	        text(sessionSpan, sessionLen);
 	        text(breakSpan, breakLen);
 
-	        left++;
-	        tick();
+	        setTimer();
 	    }();
 	})(document.getElementById('pomodoro'));
 
@@ -188,5 +239,5 @@
 	    };
 	}
 
-/***/ }
+/***/ })
 /******/ ]);

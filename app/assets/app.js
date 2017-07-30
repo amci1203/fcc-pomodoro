@@ -8,10 +8,15 @@
         get          = id => document.getElementById(id),
         byClass      = (elm, _class) => elm.querySelectorAll(`.${_class}`),
         // takes either a number in ms to reduce to minutes or a whole number (in minutes) to multiply to seconds
-        inSeconds    = (n, isInMs) => isInMs ? n / 1000 : n * 60,
-        text         = (elm, str) => elm.innerText = str,
+        inSeconds = (n, isInMs) => isInMs ? n / 1000 : n * 60,
+        text      = (elm, str) => elm.innerText = str,
+        isInbound = (n, i) => !(n == minLen && i == -1) && !(n == maxLen && i == 1),
+          
+        toggleClass  = (elm, ...classes) => classes.forEach(cls => elm.classList.toggle(cls)),
         hasClass     = (elm, str) => elm.classList.contains(str),
-        toggleClass  = (elm, str) => [...arguments].splice(1).forEach(cls => elm.classList.toggle(cls)),
+        addClass     = (elm, ...classes) => classes.forEach(cls => elm.classList.add(cls)),
+        removeClass  = (elm, ...classes) => classes.forEach(cls => elm.classList.remove(cls)),
+          
         click        = (elm, fn)  => elm.addEventListener('click', fn),
         clickEach    = (list, fn) => list.forEach(elm => click(elm, fn)),
 
@@ -21,6 +26,7 @@
         timerM = get('timer-minutes'),
         timerS = get('timer-seconds'),
 
+        stopBtn     = get('stop'),
         sessionSpan = get('session-length'),
         breakSpan   = get('break-length'),
 
@@ -29,37 +35,53 @@
 
         second = 1000,
         minute = second * 60,
+          
+        minLen = 1,
+        maxLen = 99,
 
         breakClass = 'on-break',
-
+        
+        setTimer   = () => {
+            left++;
+            tick();
+        },  
+          
         startTimer  = () => {
             start = setInterval(tick, second);
             disableIncrementControls();
+            removeClass(stopBtn, 'hidden');
         },
 
         pauseTimer  = () => clearInterval(start),
 
-        resetTimer  = () => left = inSeconds(hasClass(timerC, breakClass) ? breakLen : sessionLen ),
+        resetTimer  = () => left = inSeconds(hasClass(timerC, breakClass) ? breakLen : sessionLen ),                   
 
         stopTimer   = () => {
             if (start) clearInterval(start);
             resetTimer();
             activateIncrementControls();
+            addClass(stopBtn, 'hidden');
+            removeClass(timerC, breakClass);
+            removeClass(toggle, 'pause');
+            addClass(toggle, 'play');
+            resetTimer();
+            setTimer();
         },
 
         toggleTimer = () => {
             hasClass(toggle, 'play') ? startTimer() : pauseTimer();
             toggleClass(toggle, 'play', 'pause');
         },
-
-        disableIncrementControls = () => increments.forEach(elm => elm.setAttribute('disbabled', 'disabled')),
-        activatedisableIncrementControls = () => increments.forEach(elm => elm.removeAttribute('disabled')),
+          
+        // toggles STOP button visibility as well
+        disableIncrementControls  = () => increments.forEach(elm => addClass(elm, 'disabled')),
+        activateIncrementControls = () => increments.forEach(elm => removeClass(elm, 'disabled')),
 
         ring = () => alarm.play();
     let
         start,
 
-        sessionLen = 0.1,
+        sessionLen = 25,
         breakLen   = 5,
 
         left = inSeconds(sessionLen);
@@ -69,35 +91,48 @@
         text(timerM, String(Math.floor(left / 60)).padLeft(2,0));
         text(timerS, String(left % 60).padLeft(2,0));
 
-        !left && toggleClass(timerC, breakClass) && ring() && resetTimer()
+        if (!left) {
+            toggleClass(timerC, breakClass);
+            ring();
+            resetTimer();
+        }
     }
 
     function incrementTimerLength () {
         const
-            controls = this.parentElement.id.split(':')[1],
-            increment = hasClass(this, 'increment-up') ? 1 : -1;
+            controls  = this.parentElement.id.split(':')[1],
+            increment = hasClass(this, 'increment-up') ? 1 : -1,
+            onBreak   = hasClass(timerC, breakClass);
 
-        if (controls === 'session') {
+        if (controls === 'session' && isInbound(sessionLen, increment)) {
             sessionLen += increment;
             text(sessionSpan, sessionLen);
+            if (!onBreak) {
+                left = inSeconds(sessionLen);
+                setTimer();
+            }
         }
-        if (controls === 'break') {
+        if (controls === 'break' && isInbound(breakLen, increment)) {
             breakLen += increment;
             text(breakSpan, breakLen);
+            if (onBreak) {
+                left = inSeconds(breakLen);
+                setTimer();
+            }
         }
 
-        left = inSeconds(sessionLen);
+        
     }
 
     return (() => {
         click(toggle, toggleTimer);
         clickEach(increments, incrementTimerLength);
+        click(stopBtn, stopTimer);
 
         text(sessionSpan, sessionLen);
         text(breakSpan, breakLen);
 
-        left++;
-        tick();
+        setTimer();
     })()
 
 })(document.getElementById('pomodoro'))
