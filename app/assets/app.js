@@ -139,18 +139,18 @@
 
 function getStringPrototypes () {
     String.prototype.padLeft    = function (targetLength, padString) {
-    if (this.length >= targetLength) return this;
-    else {
-        if (['number', 'string'].indexOf(typeof(padString)) !== -1) {
-            const pad  = String(padString);
-            let target = this.split('*');
-            while (target.length < targetLength) {
-                target.unshift(pad);
+        if (this.length >= targetLength) return this;
+        else {
+            if (['number', 'string'].indexOf(typeof(padString)) !== -1) {
+                const pad  = String(padString);
+                let target = this.split('*');
+                while (target.length < targetLength) {
+                    target.unshift(pad);
+                }
+                return target.join('');
+            } else {
+                throw new Error('Err: padString is not a number or string');
             }
-            return target.join('');
-        } else {
-            throw new Error('Err: padString is not a number or string');
         }
     }
-}
 }

@@ -46,7 +46,8 @@
 
 	'use strict';
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+	// NOTE: NOT THE FIRST FUNCTION TO RUN:
+	function init(data) {
 
 	(function Pomodoro(pomo) {
 
@@ -133,8 +134,8 @@
 	        disableIncrementControls();
 	        removeClass(stopBtn, 'hidden');
 	    },
-	        pauseTimer = function pauseTimer() {
-	        return clearInterval(start);
+	        toFarenheit = function toFarenheit(C) {
+	        return _1dp(C * 1.8 + 32);
 	    },
 	        resetTimer = function resetTimer() {
 	        return left = inSeconds(hasClass(timerC, breakClass) ? breakLen : sessionLen);
@@ -237,6 +238,7 @@
 	            }
 	        }
 	    };
+	    xhr.readyState === done && ok(xhr.status) ? callback(JSON.parse(xhr.responseText)) : console.log(xhr.status + ': ' + xhr.responseText);
 	}
 
 /***/ })

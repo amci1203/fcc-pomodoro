@@ -1,7 +1,10 @@
-* { box-sizing: border-box }
+@define-mixin atMedium {
+    @media (min-width: 768px) {
+        @mixin-content;
+    }
+}
 
-$bg: #4169e1;
-$fg: #FFF;
+* { box-sizing: border-box }
 
 $pomoS: 18rem;
 
@@ -25,36 +28,15 @@ body {
     margin-right: auto;
 }
 
-#timer {
-    &-container {
-        position: relative;
-        width: $pomoS;
-        height: $pomoS;
-        border-radius: calc($pomoS / 2);
-        border: 5px solid $fg;
-        margin-top: 40px;
-        margin: 0 auto;
+main {
 
-        &.on-break {
-            color      : $bg;
-            background : $fg;
+    padding: 40px 20px;
 
-            #toggle-play {
-                background: $bg;
-                &.play { border-left-color: $bg }
-                .pause-bar-seperator { background: $fg }
-            }
-        }
+    @mixin atMedium {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
     }
-
-    font-size: 5rem;
-    font-family: monospace;
-    text-align: center;
-    margin: 0;
-
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
 }
 
 #toggle-play {
